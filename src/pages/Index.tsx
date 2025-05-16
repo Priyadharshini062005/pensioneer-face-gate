@@ -10,7 +10,8 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (isAuthenticated && user) {
+    // Only redirect if explicitly authenticated and user data exists
+    if (isAuthenticated && user && user.role) {
       if (user.role === "pensioner") {
         navigate("/pensioner/dashboard");
       } else if (user.role === "admin") {

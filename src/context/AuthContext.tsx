@@ -39,6 +39,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const navigate = useNavigate();
 
   // This is a placeholder. In reality, we would use Supabase auth here
@@ -78,6 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Will be replaced with supabase.auth.signOut()
       setUser(null);
+      localStorage.removeItem("user");
       navigate("/");
     } catch (error) {
       console.error("Logout failed", error);
@@ -86,6 +88,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check if user is already logged in
   useEffect(() => {
+    if (initialCheckDone) return;
+    
     const checkAuthStatus = async () => {
       try {
         // Will be replaced with supabase.auth.user()
@@ -97,18 +101,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error("Error checking auth status", error);
       } finally {
         setLoading(false);
+        setInitialCheckDone(true);
       }
     };
 
     checkAuthStatus();
-  }, []);
+  }, [initialCheckDone]);
 
   // Save user to localStorage when it changes
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("user");
     }
   }, [user]);
 

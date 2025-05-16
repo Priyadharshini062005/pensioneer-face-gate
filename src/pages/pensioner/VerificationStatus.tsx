@@ -9,8 +9,14 @@ const VerificationStatusPage: React.FC = () => {
   const [status, setStatus] = useState<"success" | "failed" | "pending" | "processing" | null>(
     "processing"
   );
+  const [timerStarted, setTimerStarted] = useState(false);
 
   useEffect(() => {
+    // Prevent multiple timer instances
+    if (timerStarted) return;
+    
+    setTimerStarted(true);
+    
     // Simulate verification processing
     // In a real app, this would be a call to check the status from your API
     const timer = setTimeout(() => {
@@ -26,7 +32,10 @@ const VerificationStatusPage: React.FC = () => {
       setStatus(results[randomIndex]);
     }, 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setTimerStarted(false);
+    };
   }, []);
 
   const handleBackToDashboard = () => {

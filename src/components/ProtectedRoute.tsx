@@ -24,8 +24,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (!isAuthenticated) {
-    // Redirect to login if not authenticated
+  // Add a more specific check for authentication
+  if (!isAuthenticated || !user) {
+    // Only redirect to login if actually not authenticated
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
@@ -34,7 +35,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     user?.role &&
     !allowedRoles.includes(user.role)
   ) {
-    // Redirect based on role if they can't access this page
+    // Only redirect if user has a role and it doesn't match allowed roles
     if (user.role === "pensioner") {
       return <Navigate to="/pensioner/dashboard" replace />;
     } else if (user.role === "admin") {
