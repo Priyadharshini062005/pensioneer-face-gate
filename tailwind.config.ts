@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,12 +26,30 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: '#1976D2', // Primary blue
+					foreground: '#FFFFFF',
+					50: '#E3F2FD',
+					100: '#BBDEFB',
+					200: '#90CAF9',
+					300: '#64B5F6',
+					400: '#42A5F5',
+					500: '#1E88E5',
+					600: '#1976D2',
+					700: '#1565C0',
+					800: '#0D47A1',
+					900: '#0A3977',
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: '#388E3C', // Success green
+					foreground: '#FFFFFF',
+				},
+				danger: {
+					DEFAULT: '#D32F2F', // Error/danger red
+					foreground: '#FFFFFF',
+				},
+				accent: {
+					DEFAULT: '#F57C00', // Warning/accent orange
+					foreground: '#FFFFFF',
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -84,11 +103,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 			}
 		}
 	},
