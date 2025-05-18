@@ -17,6 +17,8 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, instructionTex
   const [isLoading, setIsLoading] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [modelLoading, setModelLoading] = useState(true);
+  const [modelLoadError, setModelLoadError] = useState(false);
 
   const videoConstraints = {
     width: 720,
@@ -24,42 +26,69 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, instructionTex
     facingMode: "user",
   };
 
+  // Load face detection models
   useEffect(() => {
-    faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+    const loadModels = async () => {
+      try {
+        setModelLoading(true);
+        // Use relative path to the models folder in the public directory
+        await faceapi.nets.tinyFaceDetector.load('/models');
+        console.log("Face detection models loaded successfully");
+        setModelLoading(false);
+      } catch (error) {
+        console.error("Error loading face detection models:", error);
+        setModelLoadError(true);
+        setModelLoading(false);
+      }
+    };
+    
+    loadModels();
   }, []);
 
   const handleCameraReady = () => setIsCameraReady(true);
 
   const handleCameraError = (error: any) => {
     setCameraError("Camera access failed. Please check permissions.");
-    console.error(error);
+    console.error("Camera error:", error);
   };
 
   const detectFace = async () => {
+    if (modelLoadError) return;
+    
     const video = webcamRef.current?.video;
-    if (video) {
-      const detection = await faceapi.detectSingleFace(video as HTMLVideoElement, new faceapi.TinyFaceDetectorOptions());
-      setFaceDetected(!!detection);
+    if (video && video.readyState === 4) { // 4 means HAVE_ENOUGH_DATA
+      try {
+        const detection = await faceapi.detectSingleFace(
+          video as HTMLVideoElement, 
+          new faceapi.TinyFaceDetectorOptions()
+        );
+        setFaceDetected(!!detection);
+      } catch (error) {
+        console.error("Face detection error:", error);
+        // If face detection fails, we still allow capture
+        setFaceDetected(true);
+      }
     }
   };
 
   useEffect(() => {
-    if (isCameraReady) {
+    if (isCameraReady && !modelLoadError) {
       const interval = setInterval(detectFace, 1000);
       return () => clearInterval(interval);
     }
-  }, [isCameraReady]);
+  }, [isCameraReady, modelLoadError]);
 
   const captureImage = useCallback(() => {
-    if (!faceDetected) {
+    // If models failed to load, allow capture without face detection
+    if (modelLoadError || faceDetected) {
+      setIsLoading(true);
+      const imageSrc = webcamRef.current?.getScreenshot();
+      setCapturedImage(imageSrc || null);
+      setIsLoading(false);
+    } else {
       alert("No face detected. Please align your face in the frame.");
-      return;
     }
-    setIsLoading(true);
-    const imageSrc = webcamRef.current?.getScreenshot();
-    setCapturedImage(imageSrc || null);
-    setIsLoading(false);
-  }, [faceDetected]);
+  }, [faceDetected, modelLoadError]);
 
   const handleRetake = () => setCapturedImage(null);
   const handleConfirm = () => onCapture(capturedImage);
@@ -92,7 +121,12 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, instructionTex
               <span className="ml-2 text-gray-700">Initializing camera...</span>
             </div>
           )}
-          {isCameraReady && !faceDetected && (
+          {modelLoadError && isCameraReady && (
+            <div className="absolute bottom-0 w-full text-center bg-blue-100 text-blue-800 py-1 text-sm">
+              Face detection unavailable. Continue anyway.
+            </div>
+          )}
+          {!modelLoadError && isCameraReady && !faceDetected && (
             <div className="absolute bottom-0 w-full text-center bg-yellow-100 text-yellow-800 py-1 text-sm">
               No face detected
             </div>
@@ -109,9 +143,13 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, instructionTex
             <Button onClick={handleConfirm}>Confirm</Button>
           </>
         ) : (
-          <Button onClick={captureImage} disabled={!isCameraReady || isLoading}>
+          <Button 
+            onClick={captureImage} 
+            disabled={!isCameraReady || isLoading}
+            className={modelLoadError ? "bg-blue-500 hover:bg-blue-600" : ""}
+          >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
-            Capture
+            {modelLoadError ? "Capture Without Detection" : "Capture"}
           </Button>
         )}
       </div>
